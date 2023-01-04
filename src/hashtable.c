@@ -46,8 +46,16 @@ void insertData(HashTable *table, void *key, void *data) {
   // -- TODO --
   // HINT:
   // 1. Find the right hash bucket location with table->hashFunction.
+  int idx = table->hashFunction(key);
+
   // 2. Allocate a new hash bucket entry struct.
+  HashBucketEntry * entry = (HashBucketEntry *)malloc(sizeof(HashBucketEntry));
+  entry->key = key;
+  entry->data = data;
+
   // 3. Append to the linked list or create it if it does not yet exist. 
+  entry->next = table->buckets[idx];
+  table->buckets[idx] = entry;
 }
 
 /* Task 1.3 */
@@ -55,21 +63,46 @@ void *findData(HashTable *table, void *key) {
   // -- TODO --
   // HINT:
   // 1. Find the right hash bucket with table->hashFunction.
+  int idx = table->hashFunction(key);
+
   // 2. Walk the linked list and check for equality with table->equalFunction.
+  HashBucketEntry * p = table->buckets[idx];
+  while (p && !table->equalFunction(key, p->key))
+    p = p->next;
+  return p;
 }
 
 /* Task 2.1 */
 unsigned int stringHash(void *s) {
   // -- TODO --
-  fprintf(stderr, "need to implement stringHash\n");
   /* To suppress compiler warning until you implement this function, */
-  return 0;
+  unsigned int seed = 131;
+  unsigned hash = 0;
+  char * p = (char *)s;
+  while(*p)
+  {
+    hash = hash * seed + *p;
+    ++p;
+  }
+      
+  return hash;
 }
 
 /* Task 2.2 */
 int stringEquals(void *s1, void *s2) {
   // -- TODO --
-  fprintf(stderr, "You need to implement stringEquals");
   /* To suppress compiler warning until you implement this function */
-  return 0;
+  char * p1 = (char *)s1;
+  char * p2 = (char *)s2;
+
+  if (p1 == NULL || p2 == NULL)
+    return 0;
+  while (*p1 && *p2)
+  {
+    if (*p1 != *p2)
+      return 0;
+    ++p1;
+    ++p2;
+  }
+  return 1;
 }
