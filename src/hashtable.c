@@ -46,10 +46,14 @@ void insertData(HashTable *table, void *key, void *data) {
   // -- TODO --
   // HINT:
   // 1. Find the right hash bucket location with table->hashFunction.
-  int idx = table->hashFunction(key);
+  int idx = table->hashFunction(key) % table->size;
 
   // 2. Allocate a new hash bucket entry struct.
   HashBucketEntry * entry = (HashBucketEntry *)malloc(sizeof(HashBucketEntry));
+  if (NULL == entry) {
+    fprintf(stderr, "malloc failed for entry\n");
+    exit(1);
+  }
   entry->key = key;
   entry->data = data;
 
@@ -63,13 +67,13 @@ void *findData(HashTable *table, void *key) {
   // -- TODO --
   // HINT:
   // 1. Find the right hash bucket with table->hashFunction.
-  int idx = table->hashFunction(key);
+  int idx = table->hashFunction(key) % table->size;
 
   // 2. Walk the linked list and check for equality with table->equalFunction.
   HashBucketEntry * p = table->buckets[idx];
   while (p && !table->equalFunction(key, p->key))
     p = p->next;
-  return p;
+  return p ? p->data : NULL;
 }
 
 /* Task 2.1 */
@@ -104,5 +108,6 @@ int stringEquals(void *s1, void *s2) {
     ++p1;
     ++p2;
   }
-  return 1;
+
+  return *p1 == *p2;
 }
