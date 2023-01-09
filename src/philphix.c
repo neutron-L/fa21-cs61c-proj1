@@ -27,7 +27,7 @@
  * String utility routines.
  */
 #include <string.h>
-
+#include <assert.h>
 /*
  * This hash table stores the dictionary.
  */
@@ -83,48 +83,51 @@ void readDictionary(char *dictName) {
   char * buf = (char *)malloc(DEFAULT_LEN * sizeof(char));
   unsigned int len = DEFAULT_LEN;
   unsigned int idx = 0;
-  while ((ch = fgetc(fp)) != EOF)
+  int is_key = 1;
+  while (1)
   {
-    /* read line */
-    // extract key
-    idx = 0;
-    buf[idx++] = ch;
-    while ((ch = fgetc(fp)) && !isspace(ch))
+    ch = fgetc(fp); 
+    // extend space
+    if (idx == len)
     {
-      // extend space
-      if (idx == len)
+      len += DEFAULT_LEN;
+      buf = (char *)realloc(buf, len * sizeof(char));
+    }   
+    
+    if (isspace(ch) || ch == EOF)
+    {
+      if (idx != 0)
       {
-        len += DEFAULT_LEN;
-        buf = (char *)realloc(buf, len * sizeof(char));
+        char *tmp;
+        buf[idx++] = '\0';
+        tmp = (char *)malloc(idx * sizeof(char));
+        strcpy(tmp, buf);
+        if (is_key)
+          key = tmp;
+        else
+          value = tmp;
+        if (!is_key)
+        {
+           // insert key and data
+          insertData(dictionary, key, value); 
+          // fprintf(stderr, "insert key %s value %s\n", key, value);
+        }
+        is_key ^= 1;
+        idx = 0;
+      }
+
+      if (ch == EOF)
+        break;
+    }
+    else
+    {
+      if (is_key && !isalnum(ch))
+      {
+        fprintf(stderr, "invalid key character %c\n", ch);
+        exit(1);
       }
       buf[idx++] = ch;
     }
-    buf[idx++] = '\0';
-    key = (char *)malloc(idx * sizeof(char));
-    strcpy(key, buf);
-
-    while ((ch = fgetc(fp)) && isspace(ch))
-      continue;
-    idx = 0;
-    buf[idx++] = ch;
-
-    // extract data
-    while ((ch = fgetc(fp)) != '\n' && ch != EOF)
-    {
-       // extend space
-      if (idx == len)
-      {
-        len += DEFAULT_LEN;
-        buf = (char *)realloc(buf, len * sizeof(char));
-      }
-      buf[idx++] = ch;
-    }
-    buf[idx++] = '\0';
-    value = (char *)malloc(idx * sizeof(char));
-    strcpy(value, buf);
-
-    // insert key and data
-    insertData(dictionary, key, value); 
   }
 
   free(buf); // release buffer space
